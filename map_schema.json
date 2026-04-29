@@ -1,0 +1,26 @@
+{
+  "project_name": "My_App",
+  "nodes": [
+    {
+      "state_id": "SHA256_HASH",
+      "semantic_name": "页面语义名称",
+      "business_context": "页面业务逻辑详述",
+      "status": "Active/Deprecated",
+      "elements": [
+        {
+          "original_id": "com.app:id/btn_ok",
+          "text_content": "确认支付",
+          "ai_description": "描述",
+          "semantic_role": "PRIMARY_ACTION"
+        }
+      ],
+      "edges": [
+        {
+          "trigger_id": "btn_ok",
+          "target_state": "SUCCESS_PAGE_HASH",
+          "action_type": "TAP/LONG_PRESS/SWIPE"
+        }
+      ]
+    }
+  ]
+}
