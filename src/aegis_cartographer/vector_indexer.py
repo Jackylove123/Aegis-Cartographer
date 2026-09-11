@@ -1,9 +1,9 @@
-import os
 import json
-import numpy as np
+import os
+from typing import Any, Dict, List
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from typing import List, Dict, Any
 
 
 class AegisVectorIndex:

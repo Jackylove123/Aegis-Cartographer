@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from typing import Any, Optional
 
-from aegis_cartographer.models import MapNode, MapElement, Edge, NodeStatus
+from aegis_cartographer.models import Edge, MapElement, MapNode, NodeStatus
 from aegis_cartographer.vector_indexer import AegisVectorIndex
 
 
@@ -13,7 +13,7 @@ class AppMapManager:
         self.nodes_dir = os.path.join(output_dir, "nodes")
         self.index_file = os.path.join(output_dir, "index.json")
         os.makedirs(self.nodes_dir, exist_ok=True)
-        
+
         self.index_data = {"nodes_index": {}}
         self.vector_index = AegisVectorIndex(os.path.join(output_dir, "vector_db"))
         self.load_index()
@@ -56,7 +56,7 @@ class AppMapManager:
             kwargs.setdefault('elements', [])
             kwargs.setdefault('edges', [])
             updated_node = MapNode(state_id=state_id, **kwargs)
-        
+
         node_file = os.path.join(self.nodes_dir, f"{state_id}.json")
         with open(node_file, 'w', encoding='utf-8') as f:
             f.write(updated_node.model_dump_json(indent=2))
@@ -88,11 +88,11 @@ class AppMapManager:
     def add_node(self, node: MapNode) -> bool:
         if self.node_exists(node.state_id):
             return False
-        
+
         node_file = os.path.join(self.nodes_dir, f"{node.state_id}.json")
         with open(node_file, 'w', encoding='utf-8') as f:
             f.write(node.model_dump_json(indent=2))
-        
+
         self.index_data["nodes_index"][node.state_id] = {
             "semantic_name": node.semantic_name,
             "edges": [e.model_dump() for e in node.edges]
@@ -129,16 +129,16 @@ class AppMapManager:
         node = self.get_node(state_id)
         if not node:
             return False
-        
+
         for existing_edge in node.edges:
             if existing_edge.trigger_id == edge.trigger_id and existing_edge.target_state == edge.target_state:
                 return True
-        
+
         node.edges.append(edge)
         node_file = os.path.join(self.nodes_dir, f"{state_id}.json")
         with open(node_file, 'w', encoding='utf-8') as f:
             f.write(node.model_dump_json(indent=2))
-        
+
         self.index_data["nodes_index"][state_id]["edges"] = [e.model_dump() for e in node.edges]
         self.save_index()
         return True
@@ -156,10 +156,10 @@ class AppMapManager:
 
     def export_mermaid(self, title: Optional[str] = None) -> str:
         lines = ["```mermaid", "graph TD"]
-        
+
         if title:
             lines.append(f'    title {title}')
-        
+
         for state_id in self.index_data["nodes_index"]:
             node = self.get_node(state_id)
             if not node:
@@ -167,15 +167,15 @@ class AppMapManager:
             status_icon = "✅" if node.status == NodeStatus.ACTIVE else "❌"
             safe_name = node.semantic_name.replace('"', "'").replace("\n", " ")
             truncated_id = state_id[:12]
-            
+
             lines.append(f'    {truncated_id}["{status_icon} {safe_name}"]')
-            
+
             for edge in node.edges:
                 action = edge.action_type.value if edge.action_type else "CLICK"
                 lines.append(f'    {truncated_id} -->|{action}| {edge.target_state[:12]}')
-        
+
         lines.append("```")
-        
+
         return "\n".join(lines)
 
     def export_markdown_with_mermaid(self, output_path: str) -> None:
@@ -205,19 +205,19 @@ class AppMapManager:
                 content += f"- **业务上下文**: {node.business_context}\n"
             content += f"- **元素数量**: {len(node.elements)}\n"
             content += f"- **边数量**: {len(node.edges)}\n\n"
-            
+
             if node.elements:
                 content += "**元素**:\n"
                 for elem in node.elements:
                     content += f"- `{elem.original_id}`: {elem.text_content}\n"
                 content += "\n"
-            
+
             if node.edges:
                 content += "**跳转**:\n"
                 for edge in node.edges:
                     content += f"- `{edge.trigger_id}` → `{edge.target_state[:12]}...` ({edge.action_type})\n"
                 content += "\n"
-        
+
         Path(output_path).write_text(content, encoding="utf-8")
 
     def compute_state_hash(self, xml_data: dict[str, Any]) -> str:
@@ -235,10 +235,10 @@ class AppMapManager:
         business_context: Optional[str] = None,
     ) -> tuple[MapNode, bool]:
         from aegis_cartographer.fingerprint import extract_clickable_elements
-        
+
         state_hash = self.compute_state_hash(xml_data)
         elements = extract_clickable_elements(xml_data)
-        
+
         map_elements = [
             MapElement(
                 original_id=elem.get("id", ""),
@@ -247,7 +247,7 @@ class AppMapManager:
             )
             for elem in elements
         ]
-        
+
         existing_node = self.get_node(state_hash)
         if existing_node:
             if semantic_name:
@@ -257,7 +257,7 @@ class AppMapManager:
             existing_node.status = NodeStatus.ACTIVE
             self.save()
             return existing_node, False
-        
+
         new_node = MapNode(
             state_id=state_hash,
             semantic_name=semantic_name or "Unnamed",
@@ -266,28 +266,28 @@ class AppMapManager:
             elements=map_elements,
             edges=[],
         )
-        
+
         node_file = os.path.join(self.nodes_dir, f"{state_hash}.json")
         with open(node_file, 'w', encoding='utf-8') as f:
             f.write(new_node.model_dump_json(indent=2))
-        
+
         self.index_data["nodes_index"][state_hash] = {
             "semantic_name": new_node.semantic_name,
             "edges": []
         }
         self.save_index()
-        
+
         return new_node, True
 
     def search_by_semantic(self, query: str, limit: int = 5) -> list[dict[str, Any]]:
         query_lower = query.lower()
         results = []
-        
+
         for state_id in self.index_data["nodes_index"]:
             node = self.get_node(state_id)
             if not node:
                 continue
-            
+
             score = 0
             if node.semantic_name and query_lower in node.semantic_name.lower():
                 score += 10
@@ -296,13 +296,13 @@ class AppMapManager:
             for elem in node.elements:
                 if elem.text_content and query_lower in elem.text_content.lower():
                     score += 1
-            
+
             if score > 0:
                 results.append({
                     "state_id": node.state_id,
                     "semantic_name": node.semantic_name,
                     "score": score
                 })
-        
+
         results.sort(key=lambda x: x["score"], reverse=True)
         return results[:limit]

@@ -1,49 +1,88 @@
 # Aegis Cartographer
 
-移动端自动化测绘智能体 (Mobile Mapping Agent)
+Aegis Cartographer is a mobile App mapping agent. It explores Android and iOS
+applications through Maestro and builds reusable, project-local element maps for
+AI-driven testing.
 
-## 介绍
+For a complete end-to-end guide, see [USAGE.md](USAGE.md).
 
-Aegis Cartographer 是一个基于 MCP 协议的移动端自动化测绘工具，支持页面指纹识别、BFS 遍历回溯、安全过滤和 Mermaid 可视化导出。
+AI agents should also read [AGENTS.md](AGENTS.md) for operational boundaries,
+login ownership, exploration resume procedures, and safe CLI usage.
 
-## 功能特性
+For the v2 requirements and architecture decisions, see
+[REQUIREMENTS.md](REQUIREMENTS.md).
 
-- ✅ MCP 协议支持
-- ✅ 页面指纹计算 (SHA256)
-- ✅ BFS 遍历与智能回溯
-- ✅ 安全过滤 (危险操作拦截)
-- ✅ Mermaid 可视化导出
-- ✅ 向量语义搜索 (TF-IDF)
-- ✅ 分片存储 (Index + Nodes)
+The project is organized into separated layers:
 
-## 快速开始
+- **Core engine**: hierarchy normalization, screen identity, element identity,
+  exploration policy, safety, and map storage.
+- **Device adapters**: Maestro execution and structured action results.
+- **MCP/CLI interfaces**: project-local map control and read-only queries.
+
+Maps are stored as project-local artifacts under `.aegis/maps/`, isolated by
+application, platform, version, build, and locale. Temporary exploration state is
+kept under `.aegis/runs/` and logs under `.aegis/logs/`, so generated maps remain
+clean and portable.
+
+Example business-project layout:
+
+```text
+.aegis/
+├── config.json
+├── maps/
+│   └── com.example/android/8.2.0+12000/zh-CN/
+│       ├── manifest.json
+│       ├── map.sqlite
+│       └── exports/map.json
+├── runs/
+└── logs/
+```
+
+## Development
 
 ```bash
-# 克隆项目
-git clone https://github.com/Jackylove123/Aegis-Cartographer.git
-
-# 创建虚拟环境
-python3.13 -m venv venv
-source venv/bin/activate
-
-# 安装依赖
-pip install pydantic mcp numpy scikit-learn
-
-# 启动服务
-PYTHONPATH=src ./venv/bin/python -m aegis_cartographer
+python -m pip install -e '.[dev]'
+PYTHONPATH=src python -m pytest
 ```
 
-## 项目结构
+## CLI
 
+Initialize a business project:
+
+```bash
+aegis init \
+  --project /path/to/app-project \
+  --app-id com.example \
+  --platform android \
+  --app-version 1.2.0 \
+  --build-number 12000 \
+  --locale zh-CN
 ```
-Aegis-Cartographer/
-├── src/aegis_cartographer/
-│   ├── server.py        # MCP 服务器
-│   ├── app_map.py      # 地图管理器
-│   ├── fingerprint.py   # 页面指纹
-│   ├── traversal.py    # 遍历引擎
-│   ├── security.py     # 安全过滤
-│   └── vector_indexer.py # 向量索引
-├── aegis_output/       # 测绘输出目录
-└── pyproject.toml     # 项目配置
+
+Start a background exploration worker:
+
+```bash
+aegis explore start --project /path/to/app-project
+aegis explore status --project /path/to/app-project --run-id <run-id>
+aegis explore resume --project /path/to/app-project --run-id <run-id>
 ```
+
+Query the project-local element map:
+
+```bash
+aegis map list --project /path/to/app-project
+aegis map query --project /path/to/app-project "修改收货地址"
+```
+
+Export and validate a portable map archive:
+
+```bash
+aegis map export --project /path/to/app-project
+aegis map validate --archive /path/to/map.aegis-map.zip
+```
+
+## MCP
+
+The default `aegis-server` entry point runs the modern MCP facade in
+`aegis_cartographer.mcp_server`. It exposes read-only project map queries and
+asynchronous exploration-worker controls. See `MCP_CONFIG.md` for configuration.

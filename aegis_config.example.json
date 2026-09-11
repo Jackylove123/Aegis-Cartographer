@@ -1,0 +1,22 @@
+{
+  "project_name": "示例应用",
+  "target_package": "com.example.app",
+  "execution_method": "maestro",
+  "allowed_tools": ["maestro"],
+  "accounts": {
+    "default": {
+      "username": "user@example.com",
+      "password": "password123",
+      "description": "普通用户账号"
+    },
+    "vip": {
+      "username": "vip@example.com",
+      "password": "vip123",
+      "description": "VIP用户账号"
+    }
+  },
+  "field_mappings": {
+    "username_keywords": ["用户名", "账号", "email", "手机号", "username", "phone"],
+    "password_keywords": ["密码", "password", "passwd"]
+  }
+}

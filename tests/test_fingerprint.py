@@ -1,6 +1,6 @@
 import pytest
-from aegis_cartographer import get_skeleton_hash
 
+from aegis_cartographer import get_skeleton_hash
 
 PAGE_A = {
     "tree": {
@@ -87,7 +87,7 @@ class TestSkeletonHash:
     def test_same_structure_different_text(self):
         hash_a = get_skeleton_hash(PAGE_A)
         hash_b = get_skeleton_hash(PAGE_B)
-        
+
         assert hash_a == hash_b, (
             f"相同结构的页面应生成相同哈希，但得到:\n"
             f"  Page A: {hash_a}\n"
@@ -97,14 +97,14 @@ class TestSkeletonHash:
     def test_different_structure_different_hash(self):
         hash_a = get_skeleton_hash(PAGE_A)
         hash_c = get_skeleton_hash(PAGE_C)
-        
+
         assert hash_a != hash_c, (
-            f"不同结构的页面应生成不同哈希"
+            "不同结构的页面应生成不同哈希"
         )
 
     def test_bounds_not_included(self):
         hash_with_bounds = get_skeleton_hash(PAGE_A)
-        
+
         page_no_bounds = {
             "tree": {
                 "class": "android.widget.FrameLayout",
@@ -120,14 +120,19 @@ class TestSkeletonHash:
                                 "text": "登录",
                                 "clickable": "true",
                             },
+                            {
+                                "class": "android.widget.TextView",
+                                "resource-id": "com.app:id/title",
+                                "text": "欢迎登录",
+                            },
                         ],
                     }
                 ],
             }
         }
-        
+
         hash_no_bounds = get_skeleton_hash(page_no_bounds)
-        
+
         assert hash_with_bounds == hash_no_bounds, "bounds 不应影响哈希值"
 
     def test_content_desc_not_included(self):
@@ -143,7 +148,7 @@ class TestSkeletonHash:
                 ]
             }
         }
-        
+
         page_without_desc = {
             "tree": {
                 "children": [
@@ -155,10 +160,10 @@ class TestSkeletonHash:
                 ]
             }
         }
-        
+
         hash_with = get_skeleton_hash(page_with_desc)
         hash_without = get_skeleton_hash(page_without_desc)
-        
+
         assert hash_with == hash_without, "content-desc 不应影响哈希值"
 
     def test_non_clickable_elements_ignored(self):
@@ -178,9 +183,9 @@ class TestSkeletonHash:
                 ]
             }
         }
-        
+
         hash_result = get_skeleton_hash(page)
-        
+
         assert hash_result is not None
         assert len(hash_result) == 64
 

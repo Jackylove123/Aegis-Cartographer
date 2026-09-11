@@ -1,30 +1,11 @@
-import argparse
-from aegis_cartographer.server import run_server
+import asyncio
+
+from aegis_cartographer.mcp_server import serve
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Aegis Cartographer MCP Server")
-    parser.add_argument(
-        "--map-file",
-        type=str,
-        default="map.json",
-        help="Path to the map JSON file",
-    )
-    parser.add_argument(
-        "--host",
-        type=str,
-        default="localhost",
-        help="Server host",
-    )
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=8080,
-        help="Server port",
-    )
-    
-    args = parser.parse_args()
-    run_server(map_file_path=args.map_file, host=args.host, port=args.port)
+    """启动 Aegis Cartographer MCP 服务器"""
+    asyncio.run(serve())
 
 
 if __name__ == "__main__":
